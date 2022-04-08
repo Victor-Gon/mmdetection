@@ -15,8 +15,6 @@
 
 First, you will have to register at [KITTI Website](http://www.cvlibs.net/datasets/kitti/) and then you will be able to download the [KITTI Depth](http://www.cvlibs.net/datasets/kitti/eval_depth.php?benchmark=depth_completion) Dataset and [KITTI Raw](http://www.cvlibs.net/datasets/kitti/raw_data.php) Dataset from the website.
 
-We recommend to paste the directory at ..... as default configuration.
-
 The overall data directory is structured as follows:
 ```
 ├── kitti_depth
@@ -48,6 +46,14 @@ The overall data directory is structured as follows:
 Our proposed LiDAR Depth Completion network (LDCNet). The network outputs a dense depth map combining a camera image and the sparse LiDAR projections. In the encoder, 3D position maps are concatenated to the feature maps to encode geometric information. The decoder upsamples the feature maps using deconvolution. The numbers below the maps indicate the number of channels. K and S indicate kernel size and stride in the convolution, respectively.
 
 <div align=center><img src="https://github.com/carranza96/mmdetection/blob/javi/images/LDCNet-1.png" width = "100%" height = "100%" /></div>
+
+### Train
+
+Train default 352x1216 LDCNet model.
+
+```bash
+python ldcnet/train.py --epochs 20 --batch-size 16 --depth-path kitti_dataset/kitti_depth --raw-path kitti_dataset/kitti_raw --device 0
+```
 
 ## MMDetection
 

@@ -1,17 +1,14 @@
-from torchvision.transforms.functional import to_tensor
 import data
+import argparse
 from model import ENet, LDCNet
 import os
 import torch
 import numpy as np
-import glob
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 from torch import optim
-from torchvision import transforms, utils
-from PIL import Image
+from torchvision import transforms
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import math
 import time
 import datetime
@@ -47,15 +44,42 @@ def adjust_learning_rate(lr_init, optimizer, epoch):
 
 # Print iterations progress
 def printProgress(iteration, total):
-    percent = ("{0:.1f}").format(100 * (iteration / float(total)))
-    filledLength = int(100 * iteration // total)
-    bar = '█' * filledLength + '-' * (100 - filledLength)
+    percent = ("{0:.1f}").format(50 * (iteration / float(total)))
+    filledLength = int(50 * iteration // total)
+    bar = '█' * filledLength + '-' * (50 - filledLength)
     print(f'\r{""} |{bar}| {percent}% {""}', end = '\r')
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Train a model')
+    parser.add_argument('--height', type=int, default=352, help='input image height')
+    parser.add_argument('--width', type=int, default=1216, help='input image width')
+    # parser.add_argument('--resume-from', help='the checkpoint file to resume from')
+    # parser.add_argument('--save-directory', help='the checkpoint file to resume from')
+    parser.add_argument('--model', type=str, default=LDCNet , help='model type(LDCNet or ENet)')
+    parser.add_argument('--batch-size', type=int, default=1 , help='batch size')
+    parser.add_argument('--depth-path', required=True, help='path to kitti dataset depth')
+    parser.add_argument('--raw-path', required=True, help='path to kitti dataset raw')
+    parser.add_argument('--device', type=int, help='graphic id number, stay empty for cpu')
+    parser.add_argument('--workers', type=int, default=4 , help='workers')
+    parser.add_argument('--epochs', default=12, help='number of epochs')
+
+    
+    args = parser.parse_args()
+
+    return args
 
 
 def main():
-    h, w = 352, 1216
-    model_type = "LDCNet"
+    args = parse_args()
+
+    h, w = args.height, args.width
+    model_type = args.model
+    # kitti_depth_route = "/home/javgal/kitti_depth_clean/kitti_depth"
+    # kitti_raw_route = '/home/javgal/kitti_depth_clean/kitti_raw'
+    kitti_depth_route = args.depth_path
+    kitti_raw_route = args.raw_path
+    device_type = args.device
+    epochs = args.epochs
     
     temp_start = time.gmtime()
     temp = "(" + str(temp_start[2]) + "," + str(temp_start[1]) + "," + str(temp_start[0]) + "), " + str(temp_start[3]) + ":" + str(temp_start[4]) + ":" + str(temp_start[5])
@@ -63,24 +87,28 @@ def main():
     to_tensor = transforms.ToTensor()
     to_float_tensor = lambda x: to_tensor(x).float()
     transform = transforms.Compose([to_float_tensor])
-    train_dataset = data.KittiDataset(h, w, "/home/javgal/kitti_depth_clean/kitti_depth", '/home/javgal/kitti_depth_clean/kitti_raw', "train",transform)
-    train_loader = DataLoader(train_dataset, batch_size=2, shuffle=True, num_workers=4, pin_memory=True)
 
-    val_dataset = data.KittiDataset(h, w, "/home/javgal/kitti_depth_clean/kitti_depth", '/home/javgal/kitti_depth_clean/kitti_raw', "val",transform)
-    val_loader = DataLoader(val_dataset, batch_size=2, shuffle=False, num_workers=4, pin_memory=True)
+    train_dataset = data.KittiDataset(h, w, kitti_depth_route, kitti_raw_route, "train",transform)
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.workers, pin_memory=True)
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    val_dataset = data.KittiDataset(h, w, kitti_depth_route, kitti_raw_route, "val",transform)
+    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.workers, pin_memory=True)
+
+    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:" + str(device_type)) if isinstance(device_type,int) else "cpu"
 
     absolute_loss = 9999999999999
     a = len(train_loader)
-    epochs = 5
 
     model = None
 
-    if(model_type == "LDCNet"):
-        model = nn.DataParallel(LDCNet(h, w), device_ids=[0,1]).to(device)
-    elif(model_type == "ENet"):
-        model = nn.DataParallel(ENet(h, w), device_ids=[0,1]).to(device)
+    print("Device used: " + ("cuda:" + str(device_type) if isinstance(device_type,int) else "cpu"))
+
+
+    if(model_type == LDCNet):
+        model = LDCNet(h, w).to(device)
+    elif(model_type == ENet):
+        model = ENet(h, w).to(device)
     
 
     optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-6, betas=(0.9, 0.99))
@@ -124,13 +152,13 @@ def main():
 
                 batch_features = batch_features.float()
 
-                if(model_type == "LDCNet"):
+                if(model_type == LDCNet):
                     out = model(batch_features, args)
 
                     depth_loss = depth_criterion(out, gt)
                     st1_loss = 0
                     st2_loss = 0
-                elif(model_type == "ENet"):
+                elif(model_type == ENet):
                     st1_pred, st2_pred, out = model(batch_features, args)
 
                     depth_loss = depth_criterion(out, gt)
@@ -191,9 +219,9 @@ def main():
                     batch_features = batch_features.float()
                     start = time.time()
 
-                    if(model_type == "LDCNet"):
+                    if(model_type == LDCNet):
                         out = model(batch_features, args)
-                    elif(model_type == "ENet"):
+                    elif(model_type == ENet):
                         _ , _ , out = model(batch_features, args)
 
                     relative_time = time.time() - start
@@ -219,7 +247,7 @@ def main():
             ex_time = absolute_time_val / len(val_loader)
 
             if (v_loss < absolute_loss):
-                torch.save(model.state_dict(),"ldcnet/results/{}/LDCNet_Best.pth".format(temp))
+                torch.save(model.state_dict(),"ldcnet/results/{}/model_Best.pth".format(temp))
                 absolute_loss = v_loss
 
             
@@ -228,7 +256,7 @@ def main():
             to_text = "epoch : {}/{}, validation loss = {:.6f} , training loss = {:.6f} \nExecution time = {:.6f}\n\n".format(epoch + 1, epochs, v_loss, t_loss, ex_time)
             file.write(to_text)
 
-            torch.save(model.state_dict(),"ldcnet/results/{}/LDCNet_epoch_{}.pth".format(temp, epoch))
+            torch.save(model.state_dict(),"ldcnet/results/{}/model_epoch_{}.pth".format(temp, epoch))
 
     print("Best result: ", absolute_loss)
 
