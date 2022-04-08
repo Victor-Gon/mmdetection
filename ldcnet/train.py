@@ -44,7 +44,7 @@ def adjust_learning_rate(lr_init, optimizer, epoch):
 
 # Print iterations progress
 def printProgress(iteration, total):
-    percent = ("{0:.1f}").format(50 * (iteration / float(total)))
+    percent = ("{0:.1f}").format(100 * (iteration / float(total)))
     filledLength = int(50 * iteration // total)
     bar = '█' * filledLength + '-' * (50 - filledLength)
     print(f'\r{""} |{bar}| {percent}% {""}', end = '\r')

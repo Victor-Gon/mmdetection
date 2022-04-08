@@ -1,32 +1,44 @@
-from torchvision.transforms.functional import to_tensor
 import data
+import argparse
 from model import ENet, LDCNet
-import os
 import torch
 import numpy as np
-import glob
-from torch.utils.data import Dataset, DataLoader
-from torch import optim
-from torchvision import transforms, utils
-from PIL import Image
+from torch.utils.data import DataLoader
+from torchvision import transforms
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import math
 import time
-import datetime
 
-# cmap = plt.cm.jet
-# cmap2 = plt.cm.nipy_spectral
+def parse_args():
+    parser = argparse.ArgumentParser(description='Train a model')
+    parser.add_argument('--height', type=int, default=352, help='input image height')
+    parser.add_argument('--width', type=int, default=1216, help='input image width')
+    # parser.add_argument('--resume-from', help='the checkpoint file to resume from')
+    # parser.add_argument('--save-directory', help='the checkpoint file to resume from')
+    parser.add_argument('--model', type=str, default=LDCNet , help='model type(LDCNet or ENet)')
+    parser.add_argument('--batch-size', type=int, default=1 , help='batch size')
+    parser.add_argument('--depth-path', required=True, help='path to kitti dataset depth')
+    parser.add_argument('--raw-path', required=True, help='path to kitti dataset raw')
+    parser.add_argument('--device', type=int, help='graphic id number, stay empty for cpu')
+    parser.add_argument('--workers', type=int, default=4 , help='workers')
+    parser.add_argument('--model-path', required=True, help='path to trained model')
 
-# def depth_colorize(depth):
-#     depth = (depth - np.min(depth)) / (np.max(depth) - np.min(depth))
-#     depth = 255 * cmap(depth)[:, :, :3]  # H, W, C
-#     return depth.astype('uint8')
+    
+    args = parser.parse_args()
+
+    return args
 
 def main():
-    h, w = 352, 1216
-    model_type = "LDCNet"
+    args = parse_args()
+
+    h, w = args.height, args.width
+    model_type = args.model
+    # kitti_depth_route = "/home/javgal/kitti_depth_clean/kitti_depth"
+    # kitti_raw_route = '/home/javgal/kitti_depth_clean/kitti_raw'
+    kitti_depth_route = args.depth_path
+    kitti_raw_route = args.raw_path
+    device_type = args.device
     
     temp_start = time.gmtime()
     temp = "(" + str(temp_start[2]) + "," + str(temp_start[1]) + "," + str(temp_start[0]) + "), " + str(temp_start[3]) + ":" + str(temp_start[4]) + ":" + str(temp_start[5])
@@ -35,19 +47,20 @@ def main():
     to_float_tensor = lambda x: to_tensor(x).float()
     transform = transforms.Compose([to_float_tensor])
 
-    val_dataset = data.KittiDataset(h, w, "/home/javgal/kitti_depth_clean/kitti_depth", '/home/javgal/kitti_depth_clean/kitti_raw', "val",transform)
-    val_loader = DataLoader(val_dataset, batch_size=2, shuffle=False, num_workers=4, pin_memory=True)
+    val_dataset = data.KittiDataset(h, w, kitti_depth_route, kitti_raw_route, "val",transform)
+    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.workers, pin_memory=True)
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:" + str(device_type)) if isinstance(device_type,int) else "cpu"
 
-    model_path = "/home/javgal/kitti_depth_clean/results/ENet_Simple_1216x352/ENet_Simple_Best.pth"
+    # model_path = "/home/javgal/kitti_depth_clean/results/ENet_Simple_1216x352/ENet_Simple_Best.pth"
+    model_path = args.model_path
 
     model = None
 
-    if(model_type == "LDCNet"):
-        model = nn.DataParallel(LDCNet(h, w), device_ids=[0,1]).to(device)
-    elif(model_type == "ENet"):
-        model = nn.DataParallel(ENet(h, w), device_ids=[0,1]).to(device)
+    if(model_type == LDCNet):
+        model = LDCNet(h, w).to(device)
+    elif(model_type == ENet):
+        model = ENet(h, w).to(device)
 
     model.load_state_dict(torch.load(model_path))
     
@@ -79,9 +92,9 @@ def main():
             batch_features = batch_features.float()
             start = time.time()
 
-            if(model_type == "LDCNet"):
+            if(model_type == LDCNet):
                 out = model(batch_features, args)
-            elif(model_type == "ENet"):
+            elif(model_type == ENet):
                 _ , _ , out = model(batch_features, args)
 
             gpu_time = time.time() - start
