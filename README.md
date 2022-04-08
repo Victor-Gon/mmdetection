@@ -60,7 +60,7 @@ python ldcnet/train.py --epochs 20 --batch-size 16 --depth-path kitti_dataset/ki
 Evaluate RMSE and execution time for a trained model.
 
 ```bash
-python ldcnet/val.py--depth-path kitti_dataset/kitti_depth --raw-path kitti_dataset/kitti_raw --model-path results/train1/model_Best.pth --device 0
+python ldcnet/val.py --depth-path kitti_dataset/kitti_depth --raw-path kitti_dataset/kitti_raw --model-path results/train1/model_Best.pth --device 0
 ```
 ### Test
 
