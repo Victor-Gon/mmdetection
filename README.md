@@ -67,7 +67,7 @@ python ldcnet/val.py--depth-path kitti_dataset/kitti_depth --raw-path kitti_data
 Testing trained model.
 
 ```bash
-python ldcnet/val.py--depth-path kitti_dataset/kitti_depth --raw-path kitti_dataset/kitti_raw --model-path results/train1/model_Best.pth --device 0
+python ldcnet/val.py --depth-path kitti_dataset/kitti_depth --raw-path kitti_dataset/kitti_raw --model-path results/train1/model_Best.pth --device 0
 ```
 
 
