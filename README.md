@@ -11,6 +11,10 @@
 
 ## Kitti Dataset Setup
 
+### Data
+
+First, you will have to register at [KITTI Website](http://www.cvlibs.net/datasets/kitti/) and then you will be able to download the [KITTI Depth](http://www.cvlibs.net/datasets/kitti/eval_depth.php?benchmark=depth_completion) Dataset and [KITTI Raw](http://www.cvlibs.net/datasets/kitti/raw_data.php) Dataset from the website.
+
 ## LDCNet
 ### Method
 
