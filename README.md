@@ -1,4 +1,4 @@
-# Multi-modal object detection for autonomous driving using transfer learning for LiDAR depth completion
+# Object Detection Using Depth Completion and Camera-LiDAR Fusion for Autonomous Driving
 
 ## Contents
 1. [Dependency](#dependency)

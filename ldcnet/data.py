@@ -122,32 +122,44 @@ class KittiDataset(Dataset):
                 date_liststr.append(ps[-5][:10])
                 pnew = root_dir_raw + "/" + '/'.join(date_liststr + ps[-5:-4] + ps[-2:-1] + ['data'] + ps[-1:])
                 return pnew
+        elif(split=="test"):
+            glob_d = os.path.join(
+                root_dir_depth,
+                '*.png')
+            glob_gt = os.path.join(
+                root_dir_depth,
+                '*.png')
+
+            glob_rgb = os.path.join(
+                root_dir_depth,
+                '*.png')
 
 
         paths_d = sorted(glob.glob(glob_d))
         paths_gt = sorted(glob.glob(glob_gt))
-        paths_rgb = [get_rgb_paths(p) for p in paths_gt]
+        paths_rgb = [get_rgb_paths(p) for p in paths_gt] if split!="test" else sorted(glob.glob(glob_rgb))
         self.paths = {"rgb": paths_rgb, "d": paths_d, "gt": paths_gt}
     
     def __len__(self):
         return len(self.paths['gt'])
 
     def __getraw__(self, index):
+        rgb_name= self.paths["rgb"][index]
         rgb= rgb_read(self.paths['rgb'][index])
         sparse= depth_read(self.paths['d'][index])
         target= depth_read(self.paths['gt'][index])
 
-        return rgb, sparse, target
+        return rgb_name, rgb, sparse, target
     
     def __getitem__(self, index):
         # This version normalizes RGB and sparse depth
-        rgb, sparse, target = self.__getraw__(index)
+        rgb_name, rgb, sparse, target = self.__getraw__(index)
 
         rgb, sparse, target = transform(rgb.astype(int), sparse, target, self.transform)  # Estandar
 
         rgb = F.interpolate(rgb.unsqueeze(0), size=(self.h,self.w), mode='nearest').squeeze(0)
         sparse = F.interpolate(sparse.unsqueeze(0), size=(self.h,self.w), mode='nearest').squeeze(0)
-        target = F.interpolate(target.unsqueeze(0), size=(self.h,self.w), mode='nearest').squeeze(0)
+        target = F.interpolate(target.unsqueeze(0), size=(self.h,self.w), mode='nearest').squeeze(0) if target is not None else None
 
         K = load_calib()
         position = AddCoordsNp(self.h, self.w)
@@ -156,6 +168,6 @@ class KittiDataset(Dataset):
         to_tensor = transforms.ToTensor()
         to_float_tensor = lambda x: to_tensor(x).float()
         
-        data = {"rgb": rgb, "d": sparse/80., "gt": target, "position": to_float_tensor(position), "K": K}
+        data = {"rgb_name": rgb_name, "rgb": rgb, "d": sparse/80., "gt": target, "position": to_float_tensor(position), "K": K}
     
         return data

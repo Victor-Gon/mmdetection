@@ -55,6 +55,7 @@ def parse_args():
     parser.add_argument('--width', type=int, default=1216, help='input image width')
     # parser.add_argument('--resume-from', help='the checkpoint file to resume from')
     # parser.add_argument('--save-directory', help='the checkpoint file to resume from')
+    # parser.add_argument('--work-dir', help='the checkpoint file to resume from')
     parser.add_argument('--model', type=str, default=LDCNet , help='model type(LDCNet or ENet)')
     parser.add_argument('--batch-size', type=int, default=1 , help='batch size')
     parser.add_argument('--depth-path', required=True, help='path to kitti dataset depth')
