@@ -7,7 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 import torch.nn.functional as F
 from PIL import Image
-from CoordConv import AddCoordsNp
+# from CoordConv import AddCoordsNp
 
 def rgb_read(filename):
     assert os.path.exists(filename), "file not found: {}".format(filename)

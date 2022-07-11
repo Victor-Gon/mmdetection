@@ -73,4 +73,8 @@ python ldcnet/val.py --depth-path kitti_dataset/kitti_depth --raw-path kitti_dat
 
 ## MMDetection
 
+### Train
+
+You will need a configuration archive like `configs/waymo_open/lidar/faster_rcnn_r50_fpn_fp16_4x2_1x_1280x1920_enet.py` where you may edit base model, dataset and training schedule.
+
 ## Citation

@@ -4,7 +4,7 @@ _base_ = [
     '../../_base_/schedules/schedule_1x.py', '../../_base_/default_runtime.py'
 ]
 # model
-model = dict(backbone=dict(in_channels=4),
+model = dict(backbone=dict(in_channels=3),
              roi_head=dict(bbox_head=dict(num_classes=3)))
 # data
 data = dict(samples_per_gpu=1)

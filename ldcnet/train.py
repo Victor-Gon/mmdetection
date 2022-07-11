@@ -56,13 +56,13 @@ def parse_args():
     # parser.add_argument('--resume-from', help='the checkpoint file to resume from')
     # parser.add_argument('--save-directory', help='the checkpoint file to resume from')
     # parser.add_argument('--work-dir', help='the checkpoint file to resume from')
-    parser.add_argument('--model', type=str, default=LDCNet , help='model type(LDCNet or ENet)')
+    parser.add_argument('--model', type=str, default="LDCNet" , help='model type(LDCNet or ENet)')
     parser.add_argument('--batch-size', type=int, default=1 , help='batch size')
     parser.add_argument('--depth-path', required=True, help='path to kitti dataset depth')
     parser.add_argument('--raw-path', required=True, help='path to kitti dataset raw')
     parser.add_argument('--device', type=int, help='graphic id number, stay empty for cpu')
     parser.add_argument('--workers', type=int, default=4 , help='workers')
-    parser.add_argument('--epochs', default=12, help='number of epochs')
+    parser.add_argument('--epochs', type=int, default=12, help='number of epochs')
 
     
     args = parser.parse_args()
@@ -106,10 +106,12 @@ def main():
     print("Device used: " + ("cuda:" + str(device_type) if isinstance(device_type,int) else "cpu"))
 
 
-    if(model_type == LDCNet):
+    if(model_type == "LDCNet"):
         model = LDCNet(h, w).to(device)
-    elif(model_type == ENet):
+    elif(model_type == "ENet"):
         model = ENet(h, w).to(device)
+
+    print(model)
     
 
     optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-6, betas=(0.9, 0.99))
@@ -153,13 +155,13 @@ def main():
 
                 batch_features = batch_features.float()
 
-                if(model_type == LDCNet):
+                if(model_type == "LDCNet"):
                     out = model(batch_features, args)
 
                     depth_loss = depth_criterion(out, gt)
                     st1_loss = 0
                     st2_loss = 0
-                elif(model_type == ENet):
+                elif(model_type == "ENet"):
                     st1_pred, st2_pred, out = model(batch_features, args)
 
                     depth_loss = depth_criterion(out, gt)

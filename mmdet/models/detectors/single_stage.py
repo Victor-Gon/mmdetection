@@ -5,6 +5,26 @@ import torch
 from mmdet.core import bbox2result
 from ..builder import DETECTORS, build_backbone, build_head, build_neck
 from .base import BaseDetector
+from ldcnet.model import ENet, LDCNet
+from ldcnet.CoordConv import AddCoordsNp
+from ldcnet.data import load_calib
+from torchvision import transforms
+
+to_tensor = transforms.ToTensor()
+to_float_tensor = lambda x: to_tensor(x).float()
+
+img_h, img_w = 1080, 1920
+
+# Select model
+model_type = "LDCNet"
+# model_type = "ENet"
+# model_type = None
+
+model_path = "/home/javgal/mmdetection_clean/mmdetection/ldcnet/results/ldcnet_testing/LDCNet_Best.pth"
+
+# Select fusion
+fusion_type = "Early"
+# fusion_type = "Middle"
 
 
 @DETECTORS.register_module()
@@ -37,64 +57,109 @@ class SingleStageDetector(BaseDetector):
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
 
+        if(model_type == "LDCNet"):
+            self.fusion_model = LDCNet(img_h,img_w)
+            self.fusion_model.load_state_dict(torch.load(model_path))
+            self.fusion_model.eval()
+        elif(model_type == "ENet"):
+            self.fusion_model = ENet(img_h,img_w)
+            self.fusion_model.load_state_dict(torch.load(model_path))
+            self.fusion_model.eval()
+
         # Early fusion
-        # self.conv1x1 = torch.nn.Conv2d(4, 3, 1) 
-        # self.relu = torch.nn.ReLU() 
+        if(fusion_type == "Early"):
+            self.conv1x1 = torch.nn.Conv2d(4, 3, 1) 
+            self.relu = torch.nn.ReLU() 
 
-        # Middle fusion II
-        self.relu = torch.nn.ReLU() 
-        self.convy = torch.nn.Conv2d(1, 3, 1) 
-        self.convfpn = [torch.nn.Conv2d(512, 256, 1).cuda().half() for _ in range(5)]
+        # Middle fusion
+        elif(fusion_type == "Middle"):
+            self.relu = torch.nn.ReLU() 
+            self.convy = torch.nn.Conv2d(1, 3, 1) 
+            self.convfpn = [torch.nn.Conv2d(512, 256, 1).cuda().half() for _ in range(5)]
 
-        self.convfpn0 = torch.nn.Conv2d(512, 256, 1)
-        self.convfpn1 = torch.nn.Conv2d(512, 256, 1)   
-        self.convfpn2 = torch.nn.Conv2d(512, 256, 1)
-        self.convfpn3 = torch.nn.Conv2d(512, 256, 1)
-        self.convfpn4 = torch.nn.Conv2d(512, 256, 1)
+            self.convfpn0 = torch.nn.Conv2d(512, 256, 1)
+            self.convfpn1 = torch.nn.Conv2d(512, 256, 1)   
+            self.convfpn2 = torch.nn.Conv2d(512, 256, 1)
+            self.convfpn3 = torch.nn.Conv2d(512, 256, 1)
+            self.convfpn4 = torch.nn.Conv2d(512, 256, 1)
 
     def extract_feat(self, img):
         """Directly extract features from the backbone+neck."""
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+        z = None
+
+        with torch.no_grad():
+
+            if(model_type == "LDCNet"):
+                img_h2, img_w2 = img.shape[2], img.shape[3]
+                K = load_calib()
+                position = AddCoordsNp(img_h2, img_w2)
+                position = position.call()
+
+                args = {"position": to_float_tensor(position).view(-1, 2, img_h2, img_w2).to(device), "K": torch.tensor(K).view(-1, 3, 3).to(device)}
+                self.fusion_model.to(device)
+                batch_features = torch.tensor(img).view(-1, 4, img_h2, img_w2).to(device).float()
+                img[:,3:,:,:] = self.fusion_model(batch_features, args)
+            elif(model_type == "ENet"):
+                img_h2, img_w2 = img.shape[2], img.shape[3]
+                self.fusion_model.to(device)
+                K = load_calib()
+                position = AddCoordsNp(img_h2, img_w2)
+                position = position.call()
+
+                args = {"position": to_float_tensor(position).view(-1, 2, img_h2, img_w2).to(device), "K": torch.tensor(K).view(-1, 3, 3).to(device)}
+                batch_features = torch.tensor(img).view(-1, 4, img_h2, img_w2).to(device).float()
+                img[:,3:,:,:] = self.fusion_model(batch_features, args)[2]
 
         # Early fusion
-        # img = self.conv1x1(img)
-        # img = self.relu(img) 
-        # x = self.backbone(img)
-        # if self.with_neck:
-        #     x = self.neck(x)
+        if(fusion_type == "Early"):
+            img = self.conv1x1(img)
+            img = self.relu(img) 
+            x = self.backbone(img)
+            if self.with_neck:
+                x = self.neck(x)
 
-        # return x
+            z = x
 
         # Middle fusion II
-        x = self.backbone(img[:,0:3,:,:])
-        y = self.relu(self.convy(img[:,3:,:,:]))
-        y = self.backbone(y)
+        elif(fusion_type == "Middle"):
+            x = self.backbone(img[:,0:3,:,:])
+            y = self.relu(self.convy(y))
+            y = self.backbone(y)
 
-        if self.with_neck:
-            x = self.neck(x)
-            y = self.neck(y)
+            if self.with_neck:
+                x = self.neck(x)
+                y = self.neck(y)
 
-        # z = ()
-        # for i in range(len(x)):
-        #     # w = torch.cat((x[i], torch.mul(y[i], 1.0/(i+1))),1)
-        #     w = torch.cat((x[i], y[i]),1)
-        #     z = z + (self.relu(self.convfpn[i](w)),)
-        
-        z = ()
-        w = torch.cat((x[0], y[0]),1)
-        z = z + (self.relu(self.convfpn0(w)),)
+            # z = ()
+            # for i in range(len(x)):
+            #     # w = torch.cat((x[i], torch.mul(y[i], 1.0/(i+1))),1)
+            #     w = torch.cat((x[i], y[i]),1)
+            #     z = z + (self.relu(self.convfpn[i](w)),)
+            
+            z = ()
+            w = torch.cat((x[0], y[0]),1)
+            z = z + (self.relu(self.convfpn0(w)),)
 
-        w = torch.cat((x[1], y[1]),1)
-        z = z + (self.relu(self.convfpn1(w)),)
+            w = torch.cat((x[1], y[1]),1)
+            z = z + (self.relu(self.convfpn1(w)),)
 
-        w = torch.cat((x[2], y[2]),1)
-        z = z + (self.relu(self.convfpn2(w)),)
-  
-        w = torch.cat((x[3], y[3]),1)
-        z = z + (self.relu(self.convfpn3(w)),)
+            w = torch.cat((x[2], y[2]),1)
+            z = z + (self.relu(self.convfpn2(w)),)
+    
+            w = torch.cat((x[3], y[3]),1)
+            z = z + (self.relu(self.convfpn3(w)),)
 
-        w = torch.cat((x[4], y[4]),1)
-        z = z + (self.relu(self.convfpn4(w)),)
+            w = torch.cat((x[4], y[4]),1)
+            z = z + (self.relu(self.convfpn4(w)),)
 
+        # else:
+        #     x = self.backbone(img)
+        #     if self.with_neck:
+        #         x = self.neck(x)
+
+        #     z = x
 
         return z
 

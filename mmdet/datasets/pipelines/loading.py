@@ -4,8 +4,6 @@ import mmcv
 import numpy as np
 import pycocotools.mask as maskUtils
 
-from ldcnet.output import output
-
 from mmdet.core import BitmapMasks, PolygonMasks
 from ..builder import PIPELINES
 
@@ -164,9 +162,7 @@ class LoadMultiChannelImageFromFiles:
         else:
             filename = results['img_info']['filename']
 
-        filename[1] = filename[1].replace("lidar","enet")
         img = []
-        out = output(filename[0],filename[1])
         for name in filename:
             img_bytes = self.file_client.get(name)
             if "u16" in name:
@@ -174,7 +170,6 @@ class LoadMultiChannelImageFromFiles:
             else:
                 img.append(mmcv.imfrombytes(img_bytes, flag=self.color_type))
         # img = np.stack(img, axis=-1)
-        img[1] = out
         img = np.dstack(img)
         if self.to_float32:
             img = img.astype(np.float32)
