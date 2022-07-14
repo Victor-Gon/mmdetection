@@ -20,11 +20,15 @@ model_type = "LDCNet"
 # model_type = "ENet"
 # model_type = None
 
-model_path = "/home/javgal/mmdetection_clean/mmdetection/ldcnet/results/ldcnet_testing/LDCNet_Best.pth"
+model_path = "ldcnet/results/ldcnet_12epochs/model_Best.pth"
 
 # Select fusion
 fusion_type = "Early"
 # fusion_type = "Middle"
+
+# [R, G, B, Dense Lidar]
+mean=[123.675, 116.28, 103.53, 18.411]
+std=[58.395, 57.12, 57.375, 16.634]
 
 
 @DETECTORS.register_module()
@@ -92,6 +96,7 @@ class SingleStageDetector(BaseDetector):
         with torch.no_grad():
 
             if(model_type == "LDCNet"):
+                img[:,3,:,:] = img[:,3,:,:] / 80.
                 img_h2, img_w2 = img.shape[2], img.shape[3]
                 K = load_calib()
                 position = AddCoordsNp(img_h2, img_w2)
@@ -101,7 +106,9 @@ class SingleStageDetector(BaseDetector):
                 self.fusion_model.to(device)
                 batch_features = torch.tensor(img).view(-1, 4, img_h2, img_w2).to(device).float()
                 img[:,3:,:,:] = self.fusion_model(batch_features, args)
+        
             elif(model_type == "ENet"):
+                img[:,3,:,:] = img[:,3,:,:] / 80.
                 img_h2, img_w2 = img.shape[2], img.shape[3]
                 self.fusion_model.to(device)
                 K = load_calib()
@@ -111,6 +118,10 @@ class SingleStageDetector(BaseDetector):
                 args = {"position": to_float_tensor(position).view(-1, 2, img_h2, img_w2).to(device), "K": torch.tensor(K).view(-1, 3, 3).to(device)}
                 batch_features = torch.tensor(img).view(-1, 4, img_h2, img_w2).to(device).float()
                 img[:,3:,:,:] = self.fusion_model(batch_features, args)[2]
+
+        # Normalization
+        for i in range(4):
+            img[:,i,:,:] = (img[:,i,:,:] - mean[i]) / std[i]
 
         # Early fusion
         if(fusion_type == "Early"):

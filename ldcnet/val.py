@@ -69,6 +69,8 @@ def main():
 
     i = 0
     a = len(val_loader)
+    var = 0
+    mean = 0
     total_loss = 0
     gpu_total_time = 0
     for batch_features in val_loader:
@@ -84,7 +86,7 @@ def main():
 
         args = {"position": torch.tensor(batch_features["position"]).view(-1, 2, h, w).to(device), "K": torch.tensor(batch_features["K"]).view(-1, 3, 3).to(device)}
 
-        num_images = len(val_loader)
+        # num_images = len(val_loader)
 
         with torch.no_grad():
             batch_features = torch.tensor(features).view(-1, 4, h, w).to(device)
@@ -96,6 +98,14 @@ def main():
                 out = model(batch_features, args)
             elif(model_type == ENet):
                 _ , _ , out = model(batch_features, args)
+
+            out_image = out.cpu().detach().numpy()[0,0,:,:]
+
+            mean_i = out_image.mean()
+            var_i = out_image.var()
+
+            var = var + var_i/a
+            mean = mean + mean_i/a
 
             gpu_time = time.time() - start
             gpu_total_time = gpu_total_time + (gpu_time / a)
@@ -111,6 +121,7 @@ def main():
 
             if(i % 10 == 0):
                 print(i, " / ", a)
+                print("Mean: ", mean_i, ", Var: ", var_i)
                 print("RMSE: ", loss)
 
             total_loss = total_loss + (float(loss) / a)
@@ -118,6 +129,8 @@ def main():
 
     print("Mean RMSE: ", total_loss)
     print("Mean Execution Time: ", gpu_total_time)
+    print("Mean: ", mean)
+    print("Std: ", np.sqrt(var))
 
 
 if __name__ == '__main__':

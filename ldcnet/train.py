@@ -148,6 +148,11 @@ def main():
                 features[:,0:3,:,:] = rgb
                 features[:,3,:,:] = np.reshape(d, (rgb.shape[0], h, w))
 
+                # print("RGB max: ", rgb.max())
+                # print("RGB min: ", rgb.min())
+                # print("D max: ", d.max())
+                # print("D min: ", d.min())
+
                 args = {"position": batch_features["position"].clone().detach().view(-1, 2, h, w).to(device), "K":  batch_features["K"].clone().detach().view(-1, 3, 3).to(device)}
 
                 batch_features = torch.tensor(features).view(-1, 4, h, w).to(device)
