@@ -1,6 +1,4 @@
 from ldcnet.basic import *
-from ldcnet.CoordConv import AddCoordsNp
-import numpy as np
 import torch
 
 class ENet(nn.Module):

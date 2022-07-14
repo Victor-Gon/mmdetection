@@ -6,21 +6,19 @@ import torch
 import numpy as np
 import glob
 import matplotlib.pyplot as plt
-from torch.utils.data import Dataset, DataLoader
-from torch import optim
+from torch.utils.data import DataLoader
 from torchvision import transforms
 from PIL import Image
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from CoordConv import AddCoordsNp
 import cv2
 
 def load_calib():
     """
     Temporarily hardcoding the calibration matrix using calib file from 2011_09_26
     """
-    calib = open("/home/javgal/mmdetection_clean/mmdetection/ldcnet/dataloaders/calib_cam_to_cam.txt", "r")
+    calib = open("ldcnet/dataloaders/calib_cam_to_cam.txt", "r")
     lines = calib.readlines()
     P_rect_line = lines[25]
 
@@ -91,8 +89,6 @@ def parse_args():
     parser.add_argument('--input-width', type=int, default=1216, help='input image width')
     parser.add_argument('--output-height', type=int, default=1280, help='output image height')
     parser.add_argument('--output-width', type=int, default=1920, help='output image width')
-    # parser.add_argument('--resume-from', help='the checkpoint file to resume from')
-    # parser.add_argument('--save-directory', help='the checkpoint file to resume from')
     parser.add_argument('--model', type=str, default=LDCNet , help='model type(LDCNet or ENet)')
     parser.add_argument('--depth-path', required=True, help='path to kitti dataset depth')
     parser.add_argument('--raw-path', required=True, help='path to kitti dataset raw')
@@ -125,7 +121,6 @@ def main():
 
     device = torch.device("cuda:" + str(device_type)) if isinstance(device_type,int) else "cpu"
 
-    # model_path = "/home/javgal/kitti_depth_clean/results/ENet_Simple_1216x352/ENet_Simple_Best.pth"
     model_path = args.model_path
 
     model = None

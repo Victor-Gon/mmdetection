@@ -6,7 +6,6 @@ import numpy as np
 from torch.utils.data import DataLoader
 from torchvision import transforms
 import torch
-import torch.nn as nn
 import math
 import time
 
@@ -14,8 +13,6 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Train a model')
     parser.add_argument('--height', type=int, default=352, help='input image height')
     parser.add_argument('--width', type=int, default=1216, help='input image width')
-    # parser.add_argument('--resume-from', help='the checkpoint file to resume from')
-    # parser.add_argument('--save-directory', help='the checkpoint file to resume from')
     parser.add_argument('--model', type=str, default=LDCNet , help='model type(LDCNet or ENet)')
     parser.add_argument('--batch-size', type=int, default=1 , help='batch size')
     parser.add_argument('--depth-path', required=True, help='path to kitti dataset depth')
@@ -34,8 +31,6 @@ def main():
 
     h, w = args.height, args.width
     model_type = args.model
-    # kitti_depth_route = "/home/javgal/kitti_depth_clean/kitti_depth"
-    # kitti_raw_route = '/home/javgal/kitti_depth_clean/kitti_raw'
     kitti_depth_route = args.depth_path
     kitti_raw_route = args.raw_path
     device_type = args.device
@@ -52,7 +47,6 @@ def main():
 
     device = torch.device("cuda:" + str(device_type)) if isinstance(device_type,int) else "cpu"
 
-    # model_path = "/home/javgal/kitti_depth_clean/results/ENet_Simple_1216x352/ENet_Simple_Best.pth"
     model_path = args.model_path
 
     model = None
@@ -65,7 +59,6 @@ def main():
     model.load_state_dict(torch.load(model_path))
     
     model.eval().to(device)
-    criterion = nn.MSELoss()
 
     i = 0
     a = len(val_loader)
@@ -85,8 +78,6 @@ def main():
         features[:,3,:,:] = np.reshape(d, (rgb.shape[0], h, w))
 
         args = {"position": torch.tensor(batch_features["position"]).view(-1, 2, h, w).to(device), "K": torch.tensor(batch_features["K"]).view(-1, 3, 3).to(device)}
-
-        # num_images = len(val_loader)
 
         with torch.no_grad():
             batch_features = torch.tensor(features).view(-1, 4, h, w).to(device)

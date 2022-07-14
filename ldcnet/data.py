@@ -1,10 +1,9 @@
 from __future__ import print_function, division
 import os
-import torch
 import numpy as np
 import glob
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms, utils
+from torch.utils.data import Dataset
+from torchvision import transforms
 import torch.nn.functional as F
 from PIL import Image
 from ldcnet.CoordConv import AddCoordsNp
@@ -79,13 +78,6 @@ class KittiDataset(Dataset):
         self.w = w
         
         if(split=="train"):
-            # glob_d = os.path.join(
-            #     root_dir_depth,
-            #     'data_depth_velodyne/train/2011_09_26_drive_0001_sync/proj_depth/velodyne_raw/image_0[2,3]/*.png')
-            # glob_gt = os.path.join(
-            #     root_dir_depth,
-            #     'data_depth_annotated/train/2011_09_26_drive_0001_sync/proj_depth/groundtruth/image_0[2,3]/*.png'
-            # )
             glob_d = os.path.join(
                 root_dir_depth,
                 'data_depth_velodyne/train/*_sync/proj_depth/velodyne_raw/image_0[2,3]/*.png')
@@ -101,13 +93,6 @@ class KittiDataset(Dataset):
                 pnew = root_dir_raw + "/" + '/'.join(date_liststr + ps[-5:-4] + ps[-2:-1] + ['data'] + ps[-1:])
                 return pnew
         elif(split=="val"):
-            # glob_d = os.path.join(
-            #     root_dir_depth,
-            #     'data_depth_velodyne/val/2011_09_26_drive_0002_sync/proj_depth/velodyne_raw/image_0[2,3]/*.png')
-            # glob_gt = os.path.join(
-            #     root_dir_depth,
-            #     'data_depth_annotated/val/2011_09_26_drive_0002_sync/proj_depth/groundtruth/image_0[2,3]/*.png'
-            # )
             glob_d = os.path.join(
                 root_dir_depth,
                 'data_depth_velodyne/val/*_sync/proj_depth/velodyne_raw/image_0[2,3]/*.png')
@@ -152,7 +137,6 @@ class KittiDataset(Dataset):
         return rgb_name, rgb, sparse, target
     
     def __getitem__(self, index):
-        # This version normalizes RGB and sparse depth
         rgb_name, rgb, sparse, target = self.__getraw__(index)
 
         rgb, sparse, target = transform(rgb.astype(int), sparse, target, self.transform)  # Estandar

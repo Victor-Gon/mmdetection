@@ -53,9 +53,6 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Train a model')
     parser.add_argument('--height', type=int, default=352, help='input image height')
     parser.add_argument('--width', type=int, default=1216, help='input image width')
-    # parser.add_argument('--resume-from', help='the checkpoint file to resume from')
-    # parser.add_argument('--save-directory', help='the checkpoint file to resume from')
-    # parser.add_argument('--work-dir', help='the checkpoint file to resume from')
     parser.add_argument('--model', type=str, default="LDCNet" , help='model type(LDCNet or ENet)')
     parser.add_argument('--batch-size', type=int, default=1 , help='batch size')
     parser.add_argument('--depth-path', required=True, help='path to kitti dataset depth')
@@ -75,8 +72,6 @@ def main():
 
     h, w = args.height, args.width
     model_type = args.model
-    # kitti_depth_route = "/home/javgal/kitti_depth_clean/kitti_depth"
-    # kitti_raw_route = '/home/javgal/kitti_depth_clean/kitti_raw'
     kitti_depth_route = args.depth_path
     kitti_raw_route = args.raw_path
     device_type = args.device
@@ -95,7 +90,6 @@ def main():
     val_dataset = data.KittiDataset(h, w, kitti_depth_route, kitti_raw_route, "val",transform)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.workers, pin_memory=True)
 
-    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     device = torch.device("cuda:" + str(device_type)) if isinstance(device_type,int) else "cpu"
 
     absolute_loss = 9999999999999
@@ -147,12 +141,7 @@ def main():
 
                 features[:,0:3,:,:] = rgb
                 features[:,3,:,:] = np.reshape(d, (rgb.shape[0], h, w))
-
-                # print("RGB max: ", rgb.max())
-                # print("RGB min: ", rgb.min())
-                # print("D max: ", d.max())
-                # print("D min: ", d.min())
-
+                
                 args = {"position": batch_features["position"].clone().detach().view(-1, 2, h, w).to(device), "K":  batch_features["K"].clone().detach().view(-1, 3, 3).to(device)}
 
                 batch_features = torch.tensor(features).view(-1, 4, h, w).to(device)

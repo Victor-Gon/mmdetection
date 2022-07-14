@@ -62,14 +62,6 @@ Evaluate RMSE and execution time for a trained model.
 ```bash
 python ldcnet/val.py --depth-path kitti_dataset/kitti_depth --raw-path kitti_dataset/kitti_raw --model-path results/train1/model_Best.pth --device 0
 ```
-### Test
-
-Testing trained model.
-
-```bash
-python ldcnet/val.py --depth-path kitti_dataset/kitti_depth --raw-path kitti_dataset/kitti_raw --model-path results/train1/model_Best.pth --device 0
-```
-
 
 ## MMDetection
 
@@ -82,7 +74,7 @@ Now you will have to configure `mmdet/models/detectors/two_stage.py` or `mmdet/m
 Train model.
 
 ```bash
-    scripts/train_script_multigpu_ldcnet.sh
+scripts/train_script_multigpu_ldcnet.sh
 ```
 
 ## Citation

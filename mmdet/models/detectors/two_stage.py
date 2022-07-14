@@ -14,7 +14,7 @@ from torchvision import transforms
 to_tensor = transforms.ToTensor()
 to_float_tensor = lambda x: to_tensor(x).float()
 
-img_h, img_w = 1080, 1920
+img_h, img_w = 1280, 1920
 
 # Select model
 model_type = "LDCNet"
