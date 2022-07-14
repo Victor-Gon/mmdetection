@@ -67,9 +67,9 @@ python ldcnet/val.py --depth-path kitti_dataset/kitti_depth --raw-path kitti_dat
 
 ### Train
 
-You will need a configuration archive like [a link](https://github.com/carranza96/mmdetection/tree/javi/configs/waymo_open/lidar/faster_rcnn_r50_fpn_fp16_4x2_1x_1280x1920_ldcnet.py) where you may edit base model, dataset and training schedule.
+You will need a configuration archive like [this](https://github.com/carranza96/mmdetection/tree/javi/configs/waymo_open/lidar/faster_rcnn_r50_fpn_fp16_4x2_1x_1280x1920_ldcnet.py) where you may edit base model, dataset and training schedule.
 
-Now you will have to configure  [a link](https://github.com/carranza96/mmdetection/tree/javi/mmdet/models/detectors/two_stage.py) or  [a link](https://github.com/carranza96/mmdetection/tree/javi/mmdet/models/detectors/single_stage.py) depending on which base model you have chosen. You may change `model_type` to the fusion model you want to use (or without fusion model to work with sparse lidar) and `model_path` to indicate where the .pth of the model is. Then you may select `fusion_type`, and for normalization, `mean` and `std` for the different input channels (Dense lidar mean and std are calculated in ldcnet/val.py).
+Now you will have to configure  [two_stage.py](https://github.com/carranza96/mmdetection/tree/javi/mmdet/models/detectors/two_stage.py) or  [single_stage.py](https://github.com/carranza96/mmdetection/tree/javi/mmdet/models/detectors/single_stage.py) depending on which base model you have chosen. You may change `model_type` to the fusion model you want to use (or without fusion model to work with sparse lidar) and `model_path` to indicate where the .pth of the model is. Then you may select `fusion_type`, and for normalization, `mean` and `std` for the different input channels (Dense lidar mean and std are calculated in ldcnet/val.py).
 
 Train model.
 
