@@ -522,6 +522,7 @@ class WaymoOpenDataset(CustomDataset):
                  largest_max_dets=None,
                  iou_thrs=np.arange(0.5, 0.96, 0.05),
                  waymo_metrics=False,
+                 weather=None,
                  time_of_day=None):
 
         """Evaluation in COCO protocol.
