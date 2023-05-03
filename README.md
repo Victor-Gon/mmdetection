@@ -79,6 +79,7 @@ scripts/train_script_multigpu_ldcnet.sh
 
 ## Citation
 
+```bash
 @article{carranza2022object,
   title={Object detection using depth completion and camera-LiDAR fusion for autonomous driving},
   author={Carranza-Garc{\'\i}a, Manuel and Gal{\'a}n-Sales, F Javier and Luna-Romera, Jos{\'e} Mar{\'\i}a},
@@ -88,3 +89,4 @@ scripts/train_script_multigpu_ldcnet.sh
   year={2022},
   publisher={IOS Press}
 }
+```
