@@ -1,0 +1,37 @@
+Clone git repository
+https://github.com/carranza96/mmdetection
+IMPORTANT: Switch to Branch mamoas
+
+INSTALL https://mmdetection.readthedocs.io/en/latest/get_started.html
+•	Create Python virtual env to install required libraries
+•	Install PyTorch following official instructions, depending on installed CUDA Version
+•	pip install -U openmim
+•	mim install mmengine
+•	mim install "mmcv>=2.0.0"
+
+Then, inside the cloned project folder
+cd mmdetection
+pip install -v -e .
+# "-v" means verbose, or more output
+# "-e" means installing a project in editable mode,
+# thus any local modifications made to the code will take effect without reinstallation.
+
+
+You can verify the installation following this:
+https://mmdetection.readthedocs.io/en/latest/get_started.html#verify-the-installation
+
+
+Data folder
+Annotations should follow COCO annoatation format https://mmdetection.readthedocs.io/en/latest/user_guides/train.html#coco-annotation-format
+
+
+
+
+Configs
+Dataset: configs/mamoas/mamoas_detection.py
+Model: configs/mamoas/faster_rcnn.py
+
+
+
+Train/Test scripts:
+scripts_mamoas/train_test.sh
