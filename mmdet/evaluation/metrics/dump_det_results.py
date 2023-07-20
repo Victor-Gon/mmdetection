@@ -29,7 +29,7 @@ class DumpDetResults(DumpResults):
         data_samples = _to_cpu(data_samples)
         for data_sample in data_samples:
             # remove gt
-            data_sample.pop('gt_instances', None)
+            # data_sample.pop('gt_instances', None)
             data_sample.pop('ignored_instances', None)
             data_sample.pop('gt_panoptic_seg', None)
 
