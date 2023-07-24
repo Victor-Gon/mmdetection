@@ -38,3 +38,4 @@ default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=-1))
 # Anchors size (https://github.com/open-mmlab/mmdetection/issues/3669)
 # Score threshold
 # Use pre-trained from COCO? Seems to have slighlty better performance if weights are not loaded.
+# Filter bboxes in train/test. Require min size of bbox

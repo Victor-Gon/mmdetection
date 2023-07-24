@@ -4,7 +4,7 @@ import pickle
 import json
 import shutil
 
-data_folders=["data/mamoas-15/","data/mamoas-30/","data/mamoas-60/"]
+data_folders=["data/mamoas-15/","data/mamoas-30/"]
 
 model="faster_rcnn"
 # Config file
@@ -39,13 +39,13 @@ for data_root in data_folders:
         # Test model
         # Note that test data_root and ann_file should be changed depending on the dataset(15/30/60)
         # Predictions for each fold are saved in folds/predictions/pred#NUM_FOLD#.pkl
-        # Visualization results are saved in folds/#NUM_FOLD#/timestamp_test/vis/ folder
+        # Visualization results are saved in folds/#NUM_FOLD#/timestamp_test/vis_preds/ folder (the default score_thr for visualization is 0.3)
         subprocess.run(["python", "tools/test.py", 
                         config_file, 
                         f"{ckpt_file}", 
                         "--work-dir", f"{work_dir_fold}",
                         "--out", f"{work_dir}/folds/predictions/pred{i}.pkl",
-                        "--show-dir", f"vis/",
+                        "--show-dir", f"vis_preds/",
                         f"--cfg-options",
                         f"test_dataloader.dataset.data_root={data_root}",
                         f"test_dataloader.dataset.ann_file={ann_val}",
@@ -90,8 +90,8 @@ for data_root in data_folders:
     
     
     
-    # Move visualization results to combine all in single folder vis/ at upper level
-    vis_path = f"{work_dir}vis"
+    # Move visualization results to combine all in single folder vis_preds/ at upper level
+    vis_path = f"{work_dir}vis_preds"
     if not os.path.exists(vis_path):
         os.mkdir(vis_path)
     for f in glob(f"{work_dir}folds/**/*.tif",recursive=True):
@@ -119,7 +119,7 @@ for data_root in data_folders:
     # Analyze results (save images of top-k good and bad predictions in analyze folder)
     # This can be used as a reference to get the imgs with good/bad predictions, BUT
     # in order to determine if bad predictions are FN or FP, it is better to see it in
-    # the images generated at /vis folder
+    # the images generated at vis_preds/ folder
     
     # Note that test_dataloador data_root and ann_file should be changed depending on the dataset(15/30/60)
     
