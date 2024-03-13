@@ -1,7 +1,6 @@
 _base_ = [
     '../../_base_/models/faster-rcnn_r50_fpn.py', '../../_base_/default_runtime.py',
     'semi_waymo_detection.py', 
-    # '../../_base_/default_runtime.py'
 ]
 
 detector = _base_.model
