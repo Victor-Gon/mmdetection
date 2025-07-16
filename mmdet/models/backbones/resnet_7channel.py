@@ -1,6 +1,7 @@
 # Author: victorg
 
 import torch
+import warnings
 
 from mmdet.registry import MODELS
 from mmdet.models.backbones.resnet import ResNet
@@ -10,38 +11,38 @@ from mmdet.models.backbones.resnet import ResNet
 class ResNet7Channel(ResNet):
 
     def init_weights(self):
-        # 1) Run MMDet’s normal init/load logic
-        super().init_weights()
+        """Initialize via MMEngine (ignoring conv1 mismatch), then inflate conv1."""
+        # 1) Run the base init (this applies all init_cfg, pretrained for other layers)
+        try:
+            super().init_weights()
+        except Exception as e:
+            msg = str(e)
+            # catch only the size-mismatch for conv1.weight
+            if 'conv1.weight' in msg and 'size mismatch' in msg:
+                warnings.warn(
+                    'Skipping pretrained conv1.weight load (3→7 mismatch). '
+                    'It will be inflated manually.'
+                )
+            else:
+                # re-raise anything unexpected
+                raise
 
-        # 2) Inflate conv1 if it expects 7 channels
+        print('Inflating conv1 layer to 7 channels (from 3) using the mean of the first 3 channels.')
+
+        # 2) Inflate conv1 from the 3-channel weights already in memory
         conv1 = self.conv1
-        # weight shape: [out_ch, in_ch, k, k]
-        if conv1.weight.shape[1] == 7:
-            # Load the 3-channel pretrained conv1 from your checkpoint
-            ckpt = torch.hub.load_state_dict_from_url(
-                'https://download.openmmlab.com/mmdetection/.../resnet50_caffe.pth',
-                map_location='cpu', check_hash=True)
-            old_w = ckpt['conv1.weight']  # [out_ch, 3, k, k]
+        out_ch, in_ch, k, _ = conv1.weight.shape
+        if in_ch == 7:
+            # assume super().init_weights() loaded the 3-channel stem into [:, :3, …]
+            old_w = conv1.weight.data[:, :3, :, :].clone()
 
-            # Build new 7-channel weight
-            out_ch, _, k, _ = old_w.shape
-            new_w = torch.zeros(out_ch, 7, k, k, dtype=old_w.dtype)
-
-            # Copy RGB → channels 0–2
+            # build the new 7-channel kernel
+            new_w = torch.zeros((out_ch, 7, k, k),
+                                dtype=old_w.dtype,
+                                device=old_w.device)
             new_w[:, 0:3, :, :] = old_w
-
-            # Channel 3: the “grayscale” weight (mean of the 3)
-            gray = old_w.mean(dim=1, keepdim=True)  # [out_ch,1,k,k]
-            new_w[:, 3:4, :, :] = gray
-
-            # Channels 4–6: repeat RGB again
+            new_w[:, 3:4, :, :] = old_w.mean(dim=1, keepdim=True)
             new_w[:, 4:7, :, :] = old_w
 
-            # Overwrite conv1.weight
+            # overwrite
             conv1.weight.data.copy_(new_w)
-
-            # 3) If conv1 has a bias, copy that too
-            if conv1.bias is not None and 'conv1.bias' in ckpt:
-                # old bias: [out_ch]
-                old_b = ckpt['conv1.bias']
-                conv1.bias.data.copy_(old_b)

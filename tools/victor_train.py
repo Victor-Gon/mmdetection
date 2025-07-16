@@ -25,13 +25,13 @@ print(f"GPU free memory: {free/1024**2:.1f} MB / {total/1024**2:.1f} MB")
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 import os.path as osp
+import warnings
+import mmcv
 
 from mmengine.config import Config, DictAction
 from mmengine.registry import RUNNERS
 from mmengine.runner import Runner
-
 from mmdet.utils import setup_cache_size_limit_of_dynamo
-
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
@@ -73,6 +73,11 @@ def parse_args():
     # will pass the `--local-rank` parameter to `tools/train.py` instead
     # of `--local_rank`).
     parser.add_argument('--local_rank', '--local-rank', type=int, default=0)
+    parser.add_argument(
+        '--nchannels',
+        type=int,
+        default=None,
+        help='(Required for non-RGB) Number of input channels (e.g. 3 or 7)')
     args = parser.parse_args()
     if 'LOCAL_RANK' not in os.environ:
         os.environ['LOCAL_RANK'] = str(args.local_rank)
@@ -83,8 +88,14 @@ def parse_args():
 def main():
     args = parse_args()
 
-    # Reduce the number of repeated compilations and improve
-    # training speed.
+    # Warn if nchannels not provided
+    if args.nchannels is None:
+        warnings.warn(
+            'You did not specify --nchannels. Using the config\'s default in_channels; '
+            'if your pipeline produces non-3-channel inputs (e.g. 7), please pass --nchannels accordingly.',
+            UserWarning
+        )
+
     setup_cache_size_limit_of_dynamo()
 
     # load config
@@ -93,7 +104,15 @@ def main():
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
 
-    # work_dir is determined in this priority: CLI > segment in file > filename
+    # override nchannels in the model backbone if provided
+    if args.nchannels is not None:
+        if 'model' in cfg and 'detector' in cfg.model and 'backbone' in cfg.model.detector:
+            cfg.model.detector.backbone.in_channels = args.nchannels
+            mmcv.image.geometric.DEFAULT_BORDER_VALUE = (0,)*args.nchannels
+        else:
+            warnings.warn('Could not find cfg.model.detector.backbone to set in_channels.')
+
+    # determine work_dir
     if args.work_dir is not None:
         # update configs according to CLI args if args.work_dir is not None
         cfg.work_dir = args.work_dir

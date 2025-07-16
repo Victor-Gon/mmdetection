@@ -5,6 +5,14 @@ data_root = '/mnt/hd/waymococo_f0/'
 
 backend_args = None
 
+custom_imports = dict(
+    imports=[
+        'configs.waymo_open.semi_supervised.detectors.clss_loss_safe_soft-teacher',
+        'mmdet.transforms.clahe_7channel_transform',
+        'mmdet.transforms.geometric_7channel'
+    ],
+    allow_failed_imports=False)
+
 color_space = [
     [dict(type='ColorTransform')],
     [dict(type='AutoContrast')],
@@ -83,7 +91,6 @@ strong_pipeline = [
 unsup_pipeline = [
     dict(type='LoadImageFromFile', backend_args=backend_args),
     dict(type='LoadEmptyAnnotations'),
-    dict(type='BGRTo7ChannelWithCLAHETransform'),
     dict(
         type='MultiBranch',
         branch_field=branch_field,
