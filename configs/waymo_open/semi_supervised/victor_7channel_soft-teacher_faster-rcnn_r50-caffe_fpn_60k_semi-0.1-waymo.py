@@ -26,6 +26,7 @@ std = [
     0.20318028236250318,
     0.22191031409908632
 ]
+std = [x*255 for x in std]
 
 detector = _base_.model
 detector.data_preprocessor = dict(
@@ -73,7 +74,8 @@ model = dict(
 labeled_dataset = _base_.labeled_dataset
 unlabeled_dataset = _base_.unlabeled_dataset
 train_dataloader = dict(
-    batch_size=8,
+    batch_size=2,
+    num_workers=2,
     dataset=dict(datasets=[labeled_dataset, unlabeled_dataset]))
 
 # training schedule for 60k
@@ -96,12 +98,16 @@ param_scheduler = [
 ]
 
 # optimizer
+# accumulate gradients over 2 iters → virtual batch of 8
 optim_wrapper = dict(
     type='OptimWrapper',
-    optimizer=dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001))
+    optimizer=dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001),
+    accumulative_counts=4)
 
 default_hooks = dict(
     checkpoint=dict(by_epoch=False, interval=10000, max_keep_ckpts=2))
 log_processor = dict(by_epoch=False)
 
-custom_hooks = [dict(type='MeanTeacherHook')]
+custom_hooks = [
+    dict(type='MeanTeacherHook')
+]

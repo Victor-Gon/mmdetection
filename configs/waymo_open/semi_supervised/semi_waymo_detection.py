@@ -1,5 +1,5 @@
 dataset_type = 'WaymoOpenDataset'
-data_root = 'data/waymococo_f0/'
+data_root = '/mnt/hd/waymococo_f0/'
 
 backend_args = None
 
@@ -163,4 +163,5 @@ val_evaluator = dict(
     format_only=False,
     classwise=True,
     backend_args=backend_args)
+
 test_evaluator = val_evaluator

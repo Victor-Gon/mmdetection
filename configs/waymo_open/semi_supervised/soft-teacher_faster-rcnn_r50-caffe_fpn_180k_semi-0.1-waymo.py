@@ -3,6 +3,10 @@ _base_ = [
     'semi_waymo_detection.py', 
 ]
 
+custom_imports = dict(
+    imports=['configs.waymo_open.semi_supervised.detectors.clss_loss_safe_soft-teacher'],
+    allow_failed_imports=False)
+
 detector = _base_.model
 detector.data_preprocessor = dict(
     type='DetDataPreprocessor',
@@ -27,7 +31,7 @@ detector.roi_head.bbox_head.num_classes=3
 
 model = dict(
     _delete_=True,
-    type='SoftTeacher',
+    type='CLSLossSafeSoftTeacher',
     detector=detector,
     data_preprocessor=dict(
         type='MultiBranchDataPreprocessor',
@@ -53,7 +57,7 @@ unlabeled_dataset.ann_file = 'semi_anns/' \
                              'instances_train2020.1@10-unlabeled.json'
 unlabeled_dataset.data_prefix = dict(img='train2020/')
 train_dataloader = dict(
-    batch_size=8,
+    batch_size=5,
     dataset=dict(datasets=[labeled_dataset, unlabeled_dataset]))
 
 # training schedule for 180k
@@ -78,7 +82,8 @@ param_scheduler = [
 # optimizer
 optim_wrapper = dict(
     type='OptimWrapper',
-    optimizer=dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001))
+    optimizer=dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001),
+    accumulative_counts=4)
 
 default_hooks = dict(
     checkpoint=dict(by_epoch=False, interval=10000, max_keep_ckpts=2))

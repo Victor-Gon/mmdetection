@@ -108,8 +108,8 @@ test_pipeline = [
                    'scale_factor'))
 ]
 
-batch_size = 1
-num_workers = 5
+batch_size = 2
+num_workers = 2
 # There are two common semi-supervised learning settings on the coco dataset：
 # (1) Divide the train2017 into labeled and unlabeled datasets
 # by a fixed percentage, such as 1%, 2%, 5% and 10%.
@@ -156,7 +156,7 @@ unlabeled_dataset = dict(
 val_dataloader = dict(
     batch_size=1,
     num_workers=2,
-    persistent_workers=True,
+    persistent_workers=False,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(
@@ -177,7 +177,7 @@ test_dataloader = val_dataloader
 train_dataloader = dict(
     batch_size=batch_size,
     num_workers=num_workers,
-    persistent_workers=True,
+    persistent_workers=False,
     sampler=dict(
         type='GroupMultiSourceSampler',
         batch_size=batch_size,
