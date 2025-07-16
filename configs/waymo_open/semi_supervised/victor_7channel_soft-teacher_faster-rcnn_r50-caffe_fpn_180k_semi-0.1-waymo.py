@@ -27,6 +27,7 @@ std = [
     0.22191031409908632
 ]
 std = [x*255 for x in std]
+# std = [1, 1, 1, 1, 1, 1, 1] 
 
 detector = _base_.model
 detector.data_preprocessor = dict(
@@ -52,7 +53,7 @@ detector.roi_head.bbox_head.num_classes=3
 
 model = dict(
     _delete_=True,
-    type='SoftTeacher',
+    type='CLSLossSafeSoftTeacher',
     detector=detector,
     data_preprocessor=dict(
         type='MultiBranchDataPreprocessor',
@@ -73,14 +74,17 @@ model = dict(
 # 10% waymo train2020 is set as labeled dataset
 labeled_dataset = _base_.labeled_dataset
 unlabeled_dataset = _base_.unlabeled_dataset
+labeled_dataset.ann_file = 'semi_anns/instances_train2020.1@10.json'
+unlabeled_dataset.ann_file = 'semi_anns/' \
+                             'instances_train2020.1@10-unlabeled.json'
+unlabeled_dataset.data_prefix = dict(img='train2020/')
 train_dataloader = dict(
-    batch_size=2,
-    num_workers=2,
+    batch_size=5,
     dataset=dict(datasets=[labeled_dataset, unlabeled_dataset]))
 
-# training schedule for 60k
+# training schedule for 180k
 train_cfg = dict(
-    type='IterBasedTrainLoop', max_iters=60000, val_interval=5000)
+    type='IterBasedTrainLoop', max_iters=180000, val_interval=5000)
 val_cfg = dict(type='TeacherStudentValLoop')
 test_cfg = dict(type='TestLoop')
 
@@ -91,14 +95,13 @@ param_scheduler = [
     dict(
         type='MultiStepLR',
         begin=0,
-        end=60000,
+        end=180000,
         by_epoch=False,
         milestones=[120000, 160000],
         gamma=0.1)
 ]
 
 # optimizer
-# accumulate gradients over 2 iters → virtual batch of 8
 optim_wrapper = dict(
     type='OptimWrapper',
     optimizer=dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001),
@@ -108,6 +111,4 @@ default_hooks = dict(
     checkpoint=dict(by_epoch=False, interval=10000, max_keep_ckpts=2))
 log_processor = dict(by_epoch=False)
 
-custom_hooks = [
-    dict(type='MeanTeacherHook')
-]
+custom_hooks = [dict(type='MeanTeacherHook')]

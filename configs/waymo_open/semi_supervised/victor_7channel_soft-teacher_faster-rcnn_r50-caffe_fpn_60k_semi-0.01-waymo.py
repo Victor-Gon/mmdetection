@@ -1,4 +1,6 @@
-_base_ = ['soft-teacher_faster-rcnn_r50-caffe_fpn_180k_semi-0.1-waymo.py']
+# Author: victorg
+
+_base_ = ['victor_7channel_soft-teacher_faster-rcnn_r50-caffe_fpn_180k_semi-0.1-waymo.py']
 
 # 1% waymo train2020 is set as labeled dataset
 labeled_dataset = _base_.labeled_dataset
@@ -21,7 +23,6 @@ param_scheduler = [
         begin=0,
         end=60000,
         by_epoch=False,
-        milestones=[40000, 54000],
         milestones=[40000, 54000],
         gamma=0.1)
 ]

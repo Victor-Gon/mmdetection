@@ -7,7 +7,7 @@ custom_imports = dict(
 )
 
 dataset_type = 'WaymoOpenDataset'
-data_root = '/mnt/hd/victorg/workspace/mmdetection/.data_victor/'
+data_root = '/mnt/hd/waymococo_f0/'
 
 backend_args = None
 
@@ -108,8 +108,8 @@ test_pipeline = [
                    'scale_factor'))
 ]
 
-batch_size = 2
-num_workers = 2
+batch_size = 5
+num_workers = 5
 # There are two common semi-supervised learning settings on the coco dataset：
 # (1) Divide the train2017 into labeled and unlabeled datasets
 # by a fixed percentage, such as 1%, 2%, 5% and 10%.
@@ -123,73 +123,55 @@ num_workers = 2
 # The labeled_ann_file and unlabeled_ann_file are
 # instances_train2017.json and image_info_unlabeled2017.json
 # We use this configuration by default.
-
-# Paths for new annotations
-labeled_annotation_file = '/mnt/hd/victorg/workspace/mmdetection/.data_victor/annotations/labeled_10.json'
-unlabeled_annotation_file = '/mnt/hd/victorg/workspace/mmdetection/.data_victor/annotations/unlabeled_90.json'
-val_annotation_file = '/mnt/hd/victorg/workspace/mmdetection/.data_victor/annotations/instances_val2020_split.json'
-
-# The data_prefixes are used for images of the corresponding splits
-data_prefix_train = '/mnt/hd/waymococo_f0/train2020/'  # All images for training come from this path
-
 labeled_dataset = dict(
     type=dataset_type,
     data_root=data_root,
-    ann_file='/mnt/hd/victorg/workspace/mmdetection/.data_victor/annotations/labeled_10.json',  # Correct file
-    data_prefix=dict(img='/mnt/hd/waymococo_f0/train2020/'),
+    ann_file='annotations/instances_train2020.json',
+    data_prefix=dict(img='train2020/'),
     filter_cfg=dict(filter_empty_gt=True, min_size=32),
     pipeline=sup_pipeline,
-    backend_args=backend_args
-)
+    backend_args=backend_args)
 
 unlabeled_dataset = dict(
     type=dataset_type,
     data_root=data_root,
-    ann_file='/mnt/hd/victorg/workspace/mmdetection/.data_victor/annotations/unlabeled_90.json',  # Correct file
-    data_prefix=dict(img='/mnt/hd/waymococo_f0/train2020/'),
+    ann_file='annotations/instances_unlabeled2020.json',
+    data_prefix=dict(img='unlabeled2020/'),
     filter_cfg=dict(filter_empty_gt=False),
     pipeline=unsup_pipeline,
-    backend_args=backend_args
-)
+    backend_args=backend_args)
 
-# Validation Dataset Configuration
+train_dataloader = dict(
+    batch_size=batch_size,
+    num_workers=num_workers,
+    persistent_workers=True,
+    sampler=dict(
+        type='GroupMultiSourceSampler',
+        batch_size=batch_size,
+        source_ratio=[1, 4]),
+    dataset=dict(
+        type='ConcatDataset', datasets=[labeled_dataset, unlabeled_dataset]))
+
 val_dataloader = dict(
     batch_size=1,
     num_workers=2,
-    persistent_workers=False,
+    persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=val_annotation_file,
-        data_prefix=dict(img=data_prefix_train),  # Use the same image folder for validation
+        ann_file='annotations/instances_val2020.json',
+        data_prefix=dict(img='val2020/'),
         test_mode=True,
         pipeline=test_pipeline,
-        backend_args=backend_args
-    )
-)
+        backend_args=backend_args))
 
-# Test Dataloader (same as val)
 test_dataloader = val_dataloader
 
-# Training Dataloader Configuration (same as before)
-train_dataloader = dict(
-    batch_size=batch_size,
-    num_workers=num_workers,
-    persistent_workers=False,
-    sampler=dict(
-        type='GroupMultiSourceSampler',
-        batch_size=batch_size,
-        source_ratio=[1, 4]),  # ratio of labeled to unlabeled data
-    dataset=dict(
-        type='ConcatDataset', datasets=[labeled_dataset, unlabeled_dataset])
-)
-
-# Evaluation Metrics (same as before)
 val_evaluator = dict(
     type='WaymoMetric',
-    ann_file=data_root + 'annotations/instances_val2020_split.json',
+    ann_file=data_root + 'annotations/instances_val2020.json',
     metric='bbox',
     format_only=False,
     classwise=True,
