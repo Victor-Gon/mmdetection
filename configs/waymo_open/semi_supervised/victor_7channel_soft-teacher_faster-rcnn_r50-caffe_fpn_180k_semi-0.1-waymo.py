@@ -5,6 +5,13 @@ _base_ = [
     'victor_7channel_semi_waymo_detection.py', 
 ]
 
+custom_imports = dict(
+    imports=[
+        'configs.waymo_open.semi_supervised.detectors.clss_loss_safe_soft-teacher',
+        'mmdet.transforms.clahe_7channel_transform'
+    ],
+    allow_failed_imports=False)
+
 
 # Calculated mean and std for the Dataset
 mean = [
@@ -31,13 +38,14 @@ std = [x*255 for x in std]
 
 detector = _base_.model
 detector.data_preprocessor = dict(
-    type='DetDataPreprocessor',
+    type='DetDataPreprocessor7Channel',
     mean=mean,
     std=std,
     bgr_to_rgb=False,
     pad_size_divisor=32)
 detector.backbone = dict(
-    type='ResNet',
+    type='ResNet7Channel',
+    in_channels=7,
     depth=50,
     num_stages=4,
     out_indices=(0, 1, 2, 3),

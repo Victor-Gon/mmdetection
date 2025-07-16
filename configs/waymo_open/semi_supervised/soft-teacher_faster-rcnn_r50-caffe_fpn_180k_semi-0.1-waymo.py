@@ -7,11 +7,25 @@ custom_imports = dict(
     imports=['configs.waymo_open.semi_supervised.detectors.clss_loss_safe_soft-teacher'],
     allow_failed_imports=False)
 
+mean_bgr = [
+    0.3810613051452817,
+    0.34263812425871415,
+    0.3169861344600267
+]
+mean_bgr = [x * 255 for x in mean_bgr]
+std_bgr = [
+    0.20917705938609538,
+    0.1857455798299951,
+    0.17776090025526553
+]
+std_bgr = [x * 255 for x in std_bgr]
+std_bgr = [1.0, 1.0, 1.0]
+
 detector = _base_.model
 detector.data_preprocessor = dict(
     type='DetDataPreprocessor',
-    mean=[103.530, 116.280, 123.675],
-    std=[1.0, 1.0, 1.0],
+    mean=mean_bgr,
+    std=std_bgr,
     bgr_to_rgb=False,
     pad_size_divisor=32)
 detector.backbone = dict(

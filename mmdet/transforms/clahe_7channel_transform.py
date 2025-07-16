@@ -8,7 +8,7 @@ from mmcv.transforms import BaseTransform
 
 
 @TRANSFORMS.register_module()
-class RGBTo7ChannelWithCLAHETransform(BaseTransform):
+class BGRTo7ChannelWithCLAHETransform(BaseTransform):
     """Transform to convert RGB images to a 7-channel format with CLAHE applied.
     This transform applies CLAHE to both the grayscale channel and the L-channel
     of the LAB color space, and then combines these with the original RGB channels.
@@ -19,27 +19,21 @@ class RGBTo7ChannelWithCLAHETransform(BaseTransform):
     def __init__(self):
         pass
     
-    def _after_load_image(self, pil_rgb: Image.Image) -> np.ndarray:
-        # Convert the PIL image to a numpy array (H, W, 3)
-        rgb_np = np.array(pil_rgb)
-
-        # 1) CLAHE grayscale channel (from enhanced image)
-        gray_np = cv2.cvtColor(rgb_np, cv2.COLOR_RGB2GRAY)
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-        clahe_np = clahe.apply(gray_np)  # shape (H, W)
-
-        # 2) CLAHE-enhanced RGB via LAB (from enhanced image)
-        img_bgr = cv2.cvtColor(rgb_np, cv2.COLOR_RGB2BGR)
-        lab = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2LAB)
+    def _after_load_image(self, img_bgr):
+        # 2) Swap to RGB for CLAHE
+        img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+        # 3) CLAHE on gray
+        gray = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2GRAY)
+        clahe = cv2.createCLAHE(2.0, (8, 8))
+        gray_c = clahe.apply(gray)                   # still uint8
+        # 4) CLAHE on L channel in LAB
+        lab = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2LAB)
         l, a, b = cv2.split(lab)
-        l_clahe = clahe.apply(l)
-        lab_clahe = cv2.merge((l_clahe, a, b))
-        bgr_clahe = cv2.cvtColor(lab_clahe, cv2.COLOR_LAB2BGR)
-        rgb_clahe_np = cv2.cvtColor(bgr_clahe, cv2.COLOR_BGR2RGB)
-
-        # 3) Stack into final (H, W, 7): [R,G,B], CLAHE-gray, [R',G',B']
-        combined = np.dstack([rgb_np, clahe_np, rgb_clahe_np]) 
-
+        l_c = clahe.apply(l)
+        lab_c = cv2.merge((l_c, a, b))
+        rgb_c = cv2.cvtColor(lab_c, cv2.COLOR_LAB2RGB)
+        # 5) Stack into (H, W, 7) uint8
+        combined = np.dstack([img_rgb, gray_c, rgb_c])
         return combined
 
     def transform(self, results):

@@ -1,11 +1,5 @@
 # Author: victorg
 
-custom_imports = dict(
-    imports=[
-        'mmdet.transforms.clahe_7channel_transform',
-    ], allow_failed_imports=False
-)
-
 dataset_type = 'WaymoOpenDataset'
 data_root = '/mnt/hd/waymococo_f0/'
 
@@ -44,7 +38,7 @@ sup_pipeline = [
     dict(type='RandomFlip', prob=0.5),
     dict(type='RandAugment', aug_space=color_space, aug_num=1),
     dict(type='FilterAnnotations', min_gt_bbox_wh=(1e-2, 1e-2)),
-    dict(type='RGBTo7ChannelWithCLAHETransform'),
+    dict(type='BGRTo7ChannelWithCLAHETransform'),
     dict(
         type='MultiBranch',
         branch_field=branch_field,
@@ -56,7 +50,7 @@ sup_pipeline = [
 weak_pipeline = [
     dict(type='RandomResize', scale=scale, keep_ratio=True),
     dict(type='RandomFlip', prob=0.5),
-    dict(type='RGBTo7ChannelWithCLAHETransform'),
+    dict(type='BGRTo7ChannelWithCLAHETransform'),
     dict(
         type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
@@ -77,7 +71,7 @@ strong_pipeline = [
         ]),
     dict(type='RandomErasing', n_patches=(1, 5), ratio=(0, 0.2)),
     dict(type='FilterAnnotations', min_gt_bbox_wh=(1e-2, 1e-2)),
-    dict(type='RGBTo7ChannelWithCLAHETransform'),
+    dict(type='BGRTo7ChannelWithCLAHETransform'),
     dict(
         type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
@@ -89,7 +83,7 @@ strong_pipeline = [
 unsup_pipeline = [
     dict(type='LoadImageFromFile', backend_args=backend_args),
     dict(type='LoadEmptyAnnotations'),
-    dict(type='RGBTo7ChannelWithCLAHETransform'),
+    dict(type='BGRTo7ChannelWithCLAHETransform'),
     dict(
         type='MultiBranch',
         branch_field=branch_field,
@@ -101,7 +95,7 @@ unsup_pipeline = [
 test_pipeline = [
     dict(type='LoadImageFromFile', backend_args=backend_args),
     dict(type='Resize', scale=(1280, 1920), keep_ratio=True),
-    dict(type='RGBTo7ChannelWithCLAHETransform'),
+    dict(type='BGRTo7ChannelWithCLAHETransform'),
     dict(
         type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
