@@ -1,4 +1,4 @@
-# Author: victorg
+# Author: victorg (modified)
 
 import torch
 import warnings
@@ -11,8 +11,10 @@ from mmdet.models.backbones.resnet import ResNet
 class ResNet7Channel(ResNet):
 
     def init_weights(self):
-        """Initialize via MMEngine (ignoring conv1 mismatch), then inflate conv1."""
-        # 1) Run the base init (this applies all init_cfg, pretrained for other layers)
+        """Initialize via MMEngine (ignore conv1 mismatch), then inflate conv1 to
+        7 channels ordered as R, G, B, GRAY, R, G, B from a BGR pretrained stem.
+        """
+        # 1) Run the base init (other layers get pretrained weights)
         try:
             super().init_weights()
         except Exception as e:
@@ -24,25 +26,29 @@ class ResNet7Channel(ResNet):
                     'It will be inflated manually.'
                 )
             else:
-                # re-raise anything unexpected
                 raise
-
-        print('Inflating conv1 layer to 7 channels (from 3) using the mean of the first 3 channels.')
 
         # 2) Inflate conv1 from the 3-channel weights already in memory
         conv1 = self.conv1
         out_ch, in_ch, k, _ = conv1.weight.shape
-        if in_ch == 7:
-            # assume super().init_weights() loaded the 3-channel stem into [:, :3, …]
-            old_w = conv1.weight.data[:, :3, :, :].clone()
 
-            # build the new 7-channel kernel
-            new_w = torch.zeros((out_ch, 7, k, k),
-                                dtype=old_w.dtype,
-                                device=old_w.device)
-            new_w[:, 0:3, :, :] = old_w
-            new_w[:, 3:4, :, :] = old_w.mean(dim=1, keepdim=True)
-            new_w[:, 4:7, :, :] = old_w
+        if in_ch != 7:
+            warnings.warn(f'conv1 expects {in_ch} input channels, not 7. '
+                          'Inflation skipped.')
+            return
 
-            # overwrite
+        print('Inflating conv1 to [R, G, B, GRAY, R, G, B] from BGR pretrained weights.')
+
+        with torch.no_grad():
+            # First 3 channels are BGR in the pretrained weights
+            old_w = conv1.weight.data[:, :3, :, :].clone()  # shape: [out_ch, 3, k, k]
+            # Reorder BGR -> RGB
+            rgb = old_w[:, [2, 1, 0], :, :]  # [R, G, B]
+
+            gray = rgb.mean(dim=1, keepdim=True)
+
+            # Concatenate: R,G,B,GRAY,R,G,B  -> total 7
+            new_w = torch.cat([rgb, gray, rgb], dim=1)  # [out_ch, 7, k, k]
+            assert new_w.shape[1] == 7
+
             conv1.weight.data.copy_(new_w)
