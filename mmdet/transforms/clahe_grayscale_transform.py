@@ -8,7 +8,7 @@ from mmcv.transforms import BaseTransform
 
 
 @TRANSFORMS.register_module()
-class CLAHEGrayscaleTransform(BaseTransform):
+class BGRToCLAHEGrayscaleTransform(BaseTransform):
     """Apply CLAHE on a grayscale version of the image.
 
     - If input is BGR/RGB (HxWx3), it will be converted to GRAY first.
