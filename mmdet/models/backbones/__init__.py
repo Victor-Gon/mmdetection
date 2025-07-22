@@ -14,6 +14,7 @@ from .res2net import Res2Net
 from .resnest import ResNeSt
 from .resnet import ResNet, ResNetV1d
 from .resnet_7channel import ResNet7Channel
+from .resnet_1channel import ResNet1Channel
 from .resnext import ResNeXt
 from .ssd_vgg import SSDVGG
 from .swin import SwinTransformer
@@ -25,5 +26,5 @@ __all__ = [
     'DetectoRS_ResNeXt', 'Darknet', 'ResNeSt', 'TridentResNet', 'CSPDarknet',
     'SwinTransformer', 'PyramidVisionTransformer',
     'PyramidVisionTransformerV2', 'EfficientNet', 'CSPNeXt',
-    'ResNet7Channel'
+    'ResNet7Channel', 'ResNet1Channel'
 ]
