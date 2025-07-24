@@ -13,12 +13,12 @@ mean_bgr = [
     0.3169861344600267
 ]
 mean_bgr = [x * 255 for x in mean_bgr]
-std_bgr = [
-    0.20917705938609538,
-    0.1857455798299951,
-    0.17776090025526553
-]
-std_bgr = [x * 255 for x in std_bgr]
+# std_bgr = [
+#     0.20917705938609538,
+#     0.1857455798299951,
+#     0.17776090025526553
+# ]
+# std_bgr = [x * 255 for x in std_bgr]
 std_bgr = [1.0, 1.0, 1.0]
 
 detector = _base_.model

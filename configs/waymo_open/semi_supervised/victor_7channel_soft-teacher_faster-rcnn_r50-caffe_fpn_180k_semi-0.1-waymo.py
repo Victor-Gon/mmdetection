@@ -80,7 +80,7 @@ unlabeled_dataset.ann_file = 'semi_anns/' \
                              'instances_train2020.1@10-unlabeled.json'
 unlabeled_dataset.data_prefix = dict(img='train2020/')
 train_dataloader = dict(
-    batch_size=6,
+    batch_size=5,
     dataset=dict(datasets=[labeled_dataset, unlabeled_dataset]))
 
 # training schedule for 180k

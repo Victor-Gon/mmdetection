@@ -7,29 +7,13 @@ _base_ = [
 
 
 # Calculated mean and std for the Dataset
-# TODO: single channel mean
 mean = [
-    0.3169861344600267,
-    0.34263812425871415,
-    0.3810613051452817,
-    0.4072443514665751,
-    0.3777730230166431,
-    0.40322751529709666,
-    0.4421570344150529
+    103.48053450605391
 ]
-mean = [x*255 for x in mean] 
-# TODO: single channel std
 std = [
-    0.17776090025526553,
-    0.1857455798299951,
-    0.20917705938609538,
-    0.20067077711641113,
-    0.19846362421099906,
-    0.20318028236250318,
-    0.22191031409908632
+    56.64684108915456
 ]
-std = [x*255 for x in std]
-# std = [1, 1, 1, 1, 1, 1, 1] 
+std = [1, 1, 1, 1, 1, 1, 1] 
 
 detector = _base_.model
 detector.data_preprocessor = dict(
@@ -62,7 +46,7 @@ model = dict(
         type='MultiBranchDataPreprocessor',
         data_preprocessor=detector.data_preprocessor),
     semi_train_cfg=dict(
-        freeze_teacher=False,
+        freeze_teacher=True,
         sup_weight=1.0,
         unsup_weight=4.0,
         pseudo_label_initial_score_thr=0.5,

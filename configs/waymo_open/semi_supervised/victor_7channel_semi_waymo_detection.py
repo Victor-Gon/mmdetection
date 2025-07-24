@@ -109,8 +109,8 @@ test_pipeline = [
                    'scale_factor'))
 ]
 
-batch_size = 6
-num_workers = 6
+batch_size = 5
+num_workers = 5
 # There are two common semi-supervised learning settings on the coco dataset：
 # (1) Divide the train2017 into labeled and unlabeled datasets
 # by a fixed percentage, such as 1%, 2%, 5% and 10%.
