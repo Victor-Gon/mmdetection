@@ -60,7 +60,7 @@ model = dict(
         type='MultiBranchDataPreprocessor',
         data_preprocessor=detector.data_preprocessor),
     semi_train_cfg=dict(
-        freeze_teacher=True,
+        freeze_teacher=False,
         sup_weight=1.0,
         unsup_weight=4.0,
         pseudo_label_initial_score_thr=0.5,
@@ -109,7 +109,7 @@ optim_wrapper = dict(
     accumulative_counts=4)
 
 default_hooks = dict(
-    checkpoint=dict(by_epoch=False, interval=10000, max_keep_ckpts=2))
+    checkpoint=dict(by_epoch=False, interval=10000, max_keep_ckpts=3))
 log_processor = dict(by_epoch=False)
 
 custom_hooks = [dict(type='MeanTeacherHook')]
