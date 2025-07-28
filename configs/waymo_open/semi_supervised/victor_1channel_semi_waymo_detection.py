@@ -8,7 +8,7 @@ backend_args = None
 custom_imports = dict(
     imports=[
         'configs.waymo_open.semi_supervised.detectors.clss_loss_safe_soft-teacher',
-        'mmdet.transforms.clahe_1channel_transform'
+        'mmdet.transforms.clahe_grayscale_transform'
     ],
     allow_failed_imports=False)
 

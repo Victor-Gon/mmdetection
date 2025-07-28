@@ -10,10 +10,10 @@ _base_ = [
 mean = [
     103.48053450605391
 ]
-std = [
-    56.64684108915456
-]
-std = [1, 1, 1, 1, 1, 1, 1] 
+# std = [
+#     56.64684108915456
+# ]
+std = [1] 
 
 detector = _base_.model
 detector.data_preprocessor = dict(
@@ -46,7 +46,7 @@ model = dict(
         type='MultiBranchDataPreprocessor',
         data_preprocessor=detector.data_preprocessor),
     semi_train_cfg=dict(
-        freeze_teacher=True,
+        freeze_teacher=False,
         sup_weight=1.0,
         unsup_weight=4.0,
         pseudo_label_initial_score_thr=0.5,
