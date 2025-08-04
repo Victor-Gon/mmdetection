@@ -106,7 +106,9 @@ def main():
 
     # override nchannels in the model backbone if provided
     if args.nchannels is not None:
-        if 'model' in cfg and 'detector' in cfg.model and 'backbone' in cfg.model.detector:
+        if 'model' in cfg and 'backbone' in cfg.model:
+            cfg.model.backbone.in_channels = args.nchannels
+        elif 'model' in cfg and 'detector' in cfg.model and 'backbone' in cfg.model.detector:
             cfg.model.detector.backbone.in_channels = args.nchannels
             mmcv.image.geometric.DEFAULT_BORDER_VALUE = (0,)*args.nchannels
         else:

@@ -22,6 +22,5 @@ param_scheduler = [
         end=60000,
         by_epoch=False,
         milestones=[40000, 54000],
-        milestones=[40000, 54000],
         gamma=0.1)
 ]
