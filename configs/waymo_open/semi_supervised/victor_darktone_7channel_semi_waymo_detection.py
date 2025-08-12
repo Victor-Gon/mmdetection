@@ -8,7 +8,8 @@ backend_args = None
 custom_imports = dict(
     imports=[
         'configs.waymo_open.semi_supervised.detectors.clss_loss_safe_soft-teacher',
-        'mmdet.transforms.test_clahe_7channel_transform',
+        'mmdet.transforms.clahe_7channel_dark_tone_transform',
+        'mmdet.transforms.clahe_7channel_transform',
         'mmdet.transforms.geometric_7channel'
     ],
     allow_failed_imports=False)
@@ -46,7 +47,18 @@ sup_pipeline = [
     dict(type='RandomFlip', prob=0.5),
     dict(type='RandAugment', aug_space=color_space, aug_num=1),
     dict(type='FilterAnnotations', min_gt_bbox_wh=(1e-2, 1e-2)),
-    dict(type='TestBGRTo7ChannelWithCLAHETransform'),
+    dict(type='BGRTo7ChannelDarkToneCLAHE',
+         p=0.3,
+         gamma_range=(1.8, 2.5),
+         brightness_range=(0.25, 0.45),
+         red_scale=(0.6, 0.8),
+         green_scale=(0.5, 0.7),
+         blue_scale=(0.4, 0.6),
+         saturation_range=(0.6, 0.8),
+         noise_std_range=(0.01, 0.05),
+         dark_thresh=0.2,
+         clahe_clipLimit=2.0,
+         clahe_tileGridSize=(8,8)),
     dict(
         type='MultiBranch',
         branch_field=branch_field,
@@ -58,7 +70,7 @@ sup_pipeline = [
 weak_pipeline = [
     dict(type='RandomResize', scale=scale, keep_ratio=True),
     dict(type='RandomFlip', prob=0.5),
-    dict(type='TestBGRTo7ChannelWithCLAHETransform'),
+    dict(type='BGRTo7ChannelWithCLAHETransform'),
     dict(
         type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
@@ -79,7 +91,18 @@ strong_pipeline = [
         ]),
     dict(type='RandomErasing', n_patches=(1, 5), ratio=(0, 0.2)),
     dict(type='FilterAnnotations', min_gt_bbox_wh=(1e-2, 1e-2)),
-    dict(type='TestBGRTo7ChannelWithCLAHETransform'),
+    dict(type='BGRTo7ChannelDarkToneCLAHE',
+         p=0.3,
+         gamma_range=(1.8, 2.5),
+         brightness_range=(0.25, 0.45),
+         red_scale=(0.6, 0.8),
+         green_scale=(0.5, 0.7),
+         blue_scale=(0.4, 0.6),
+         saturation_range=(0.6, 0.8),
+         noise_std_range=(0.01, 0.05),
+         dark_thresh=0.2,
+         clahe_clipLimit=2.0,
+         clahe_tileGridSize=(8,8)),
     dict(
         type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
@@ -102,15 +125,15 @@ unsup_pipeline = [
 test_pipeline = [
     dict(type='LoadImageFromFile', backend_args=backend_args),
     dict(type='Resize', scale=(1280, 1920), keep_ratio=True),
-    dict(type='TestBGRTo7ChannelWithCLAHETransform'),
+    dict(type='BGRTo7ChannelWithCLAHETransform'),
     dict(
         type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
                    'scale_factor'))
 ]
 
-batch_size = 1
-num_workers = 1
+batch_size = 5
+num_workers = 5
 # There are two common semi-supervised learning settings on the coco dataset：
 # (1) Divide the train2017 into labeled and unlabeled datasets
 # by a fixed percentage, such as 1%, 2%, 5% and 10%.
@@ -163,7 +186,7 @@ val_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         ann_file='annotations/instances_val2020.json',
-        # ann_file='/mnt/hd/victorg/workspace/mmdetection/.data_victor/annotations/instances_val2020_night.json',
+        #  ann_file='/mnt/hd/victorg/workspace/mmdetection/.data_victor/annotations/instances_val2020_night.json',
         # ann_file='/mnt/hd/victorg/workspace/mmdetection/.data_victor/annotations/instances_val2020_rain.json',
         data_prefix=dict(img='val2020/'),
         test_mode=True,

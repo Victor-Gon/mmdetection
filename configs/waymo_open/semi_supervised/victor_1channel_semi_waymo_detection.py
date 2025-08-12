@@ -162,6 +162,8 @@ val_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         ann_file='annotations/instances_val2020.json',
+        # ann_file='/mnt/hd/victorg/workspace/mmdetection/.data_victor/annotations/instances_val2020_night.json',
+        # ann_file='/mnt/hd/victorg/workspace/mmdetection/.data_victor/annotations/instances_val2020_rain.json',
         data_prefix=dict(img='val2020/'),
         test_mode=True,
         pipeline=test_pipeline,
