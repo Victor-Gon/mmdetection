@@ -8,9 +8,7 @@ backend_args = None
 custom_imports = dict(
     imports=[
         'configs.waymo_open.semi_supervised.detectors.clss_loss_safe_soft-teacher',
-        'mmdet.transforms.clahe_7channel_dark_tone_transform',
-        'mmdet.transforms.clahe_7channel_transform',
-        'mmdet.transforms.geometric_7channel'
+        'mmdet.transforms.bgr_dark_tone_transform'
     ],
     allow_failed_imports=False)
 
@@ -43,11 +41,7 @@ branch_field = ['sup', 'unsup_teacher', 'unsup_student']
 sup_pipeline = [
     dict(type='LoadImageFromFile', backend_args=backend_args),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='RandomResize', scale=scale, keep_ratio=True),
-    dict(type='RandomFlip', prob=0.5),
-    dict(type='RandAugment', aug_space=color_space, aug_num=1),
-    dict(type='FilterAnnotations', min_gt_bbox_wh=(1e-2, 1e-2)),
-    dict(type='BGRTo7ChannelDarkToneCLAHE',
+    dict(type='BGRTo3ChannelDarkTone',
          p=0.3,
          gamma_range=(1.8, 2.5),
          brightness_range=(0.25, 0.45),
@@ -56,9 +50,12 @@ sup_pipeline = [
          blue_scale=(0.4, 0.6),
          saturation_range=(0.6, 0.8),
          noise_std_range=(0.01, 0.05),
-         dark_thresh=0.2,
-         clahe_clipLimit=2.0,
-         clahe_tileGridSize=(8,8)),
+         dark_thresh=0.2
+    ),
+    dict(type='RandomResize', scale=scale, keep_ratio=True),
+    dict(type='RandomFlip', prob=0.5),
+    dict(type='RandAugment', aug_space=color_space, aug_num=1),
+    dict(type='FilterAnnotations', min_gt_bbox_wh=(1e-2, 1e-2)),
     dict(
         type='MultiBranch',
         branch_field=branch_field,
@@ -70,7 +67,6 @@ sup_pipeline = [
 weak_pipeline = [
     dict(type='RandomResize', scale=scale, keep_ratio=True),
     dict(type='RandomFlip', prob=0.5),
-    dict(type='BGRTo7ChannelWithCLAHETransform'),
     dict(
         type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
@@ -83,15 +79,7 @@ weak_pipeline = [
 strong_pipeline = [
     dict(type='RandomResize', scale=scale, keep_ratio=True),
     dict(type='RandomFlip', prob=0.5),
-    dict(
-        type='RandomOrder',
-        transforms=[
-            dict(type='RandAugment', aug_space=color_space, aug_num=1),
-            dict(type='RandAugment', aug_space=geometric, aug_num=1),
-        ]),
-    dict(type='RandomErasing', n_patches=(1, 5), ratio=(0, 0.2)),
-    dict(type='FilterAnnotations', min_gt_bbox_wh=(1e-2, 1e-2)),
-    dict(type='BGRTo7ChannelDarkToneCLAHE',
+    dict(type='BGRTo3ChannelDarkTone',
          p=0.3,
          gamma_range=(1.8, 2.5),
          brightness_range=(0.25, 0.45),
@@ -100,9 +88,16 @@ strong_pipeline = [
          blue_scale=(0.4, 0.6),
          saturation_range=(0.6, 0.8),
          noise_std_range=(0.01, 0.05),
-         dark_thresh=0.2,
-         clahe_clipLimit=2.0,
-         clahe_tileGridSize=(8,8)),
+         dark_thresh=0.2
+    ),
+    dict(
+        type='RandomOrder',
+        transforms=[
+            dict(type='RandAugment', aug_space=color_space, aug_num=1),
+            dict(type='RandAugment', aug_space=geometric, aug_num=1),
+        ]),
+    dict(type='RandomErasing', n_patches=(1, 5), ratio=(0, 0.2)),
+    dict(type='FilterAnnotations', min_gt_bbox_wh=(1e-2, 1e-2)),
     dict(
         type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
@@ -125,7 +120,6 @@ unsup_pipeline = [
 test_pipeline = [
     dict(type='LoadImageFromFile', backend_args=backend_args),
     dict(type='Resize', scale=(1280, 1920), keep_ratio=True),
-    dict(type='BGRTo7ChannelWithCLAHETransform'),
     dict(
         type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
